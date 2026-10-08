@@ -265,3 +265,60 @@ export interface CooperativeConfig {
     atas_nama: string;
   }[];
 }
+
+export type CateringCategory =
+  | 'nasi_box'
+  | 'prasmanan'
+  | 'aqiqah'
+  | 'snack_box'
+  | 'tumpeng'
+  | 'harian';
+
+export interface CateringPackage {
+  id: string;
+  nama: string;
+  kategori: CateringCategory;
+  deskripsi: string;
+  harga_per_porsi: number;
+  min_order: number;
+  menu_items: string[];
+  nama_umkm: string;
+  sertifikasi_halal?: string;
+  foto?: string;
+}
+
+export type CateringOrderStatus =
+  | 'masuk'
+  | 'dikonfirmasi'
+  | 'dimasak'
+  | 'dikirim'
+  | 'selesai'
+  | 'batal';
+
+export type CateringPaymentStatus = 'belum_dp' | 'dp_lunas' | 'lunas';
+
+export interface CateringOrder {
+  id: string;
+  no_pesanan: string;
+  member_id?: string;
+  nama_pemesan: string;
+  telepon: string;
+  alamat_pengiriman: string;
+  tgl_acara: string;
+  waktu_acara: string;
+  jenis_acara: string; // Walimah/Pernikahan, Aqiqah, Pengajian/Majelis, Rapat Kantor, Khitanan, Syukuran
+  package_id: string;
+  nama_paket: string;
+  porsi: number;
+  harga_satuan: number;
+  menu_custom?: string;
+  total_harga: number;
+  uang_muka_dp: number;
+  sisa_tagihan: number;
+  status_pembayaran: CateringPaymentStatus;
+  status_pesanan: CateringOrderStatus;
+  akad: 'istishna' | 'salam'; // Akad Jual Beli Pesanan Syariah
+  tgl_pesan: string;
+  catatan?: string;
+}
+

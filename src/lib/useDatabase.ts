@@ -5,6 +5,9 @@ import { AppDatabase, loadDatabase, saveDatabase, resetDatabase, DEFAULT_USERS }
 import {
   AuditLog,
   CashEntry,
+  CateringOrder,
+  CateringPackage,
+  CateringPaymentStatus,
   Financing,
   Installment,
   Invoice,
@@ -17,6 +20,8 @@ import {
   UserProfile,
   UserRole,
 } from '@/types';
+
+
 import { formatISODate, generateSequenceCode } from './utils';
 
 function useDatabaseInternal() {
@@ -703,6 +708,154 @@ function useDatabaseInternal() {
     logAudit('APPROVAL', 'shu_periods', `${tahun}`, `Menetapkan pembagian SHU Tahun Buku ${tahun} senilai Rp ${totalShu.toLocaleString('id-ID')}`);
   }, [mutate, logAudit]);
 
+  // --- M8: Katering Syariah ---
+  const addCateringPackage = useCallback((pkgData: Omit<CateringPackage, 'id'>) => {
+    let createdPkg: CateringPackage | null = null;
+    mutate((prev) => {
+      createdPkg = {
+        ...pkgData,
+        id: `CAT-${Date.now()}`,
+      };
+      return {
+        ...prev,
+        cateringPackages: [createdPkg, ...prev.cateringPackages],
+      };
+    });
+    logAudit('CREATE', 'catering_packages', (createdPkg as any)?.id || '', `Menambahkan paket katering baru: ${(createdPkg as any)?.nama}`);
+    return createdPkg;
+  }, [mutate, logAudit]);
+
+  const updateCateringPackage = useCallback((id: string, updates: Partial<CateringPackage>) => {
+    mutate((prev) => ({
+      ...prev,
+      cateringPackages: prev.cateringPackages.map((p) => (p.id === id ? { ...p, ...updates } : p)),
+    }));
+    logAudit('UPDATE', 'catering_packages', id, `Memperbarui data paket katering ${id}`);
+  }, [mutate, logAudit]);
+
+  const deleteCateringPackage = useCallback((id: string) => {
+    mutate((prev) => ({
+      ...prev,
+      cateringPackages: prev.cateringPackages.filter((p) => p.id !== id),
+    }));
+    logAudit('DELETE', 'catering_packages', id, `Menghapus paket katering ${id}`);
+  }, [mutate, logAudit]);
+
+  const createCateringOrder = useCallback((
+    orderData: Omit<CateringOrder, 'id' | 'no_pesanan' | 'tgl_pesan'>,
+    isDpPaidImmediately: boolean = false
+  ) => {
+    let createdOrder: CateringOrder | null = null;
+    const today = formatISODate(new Date());
+
+    mutate((prev) => {
+      const count = prev.cateringOrders.length;
+      const no_pesanan = generateSequenceCode('KAT-2026-', count, 4);
+
+      const paymentStatus: CateringOrder['status_pembayaran'] =
+        orderData.uang_muka_dp >= orderData.total_harga
+          ? 'lunas'
+          : orderData.uang_muka_dp > 0
+          ? 'dp_lunas'
+          : 'belum_dp';
+
+      createdOrder = {
+        ...orderData,
+        id: `CORD-${Date.now()}`,
+        no_pesanan,
+        tgl_pesan: today,
+        status_pembayaran: paymentStatus,
+      };
+
+      const nextCash = [...prev.cashEntries];
+      if (isDpPaidImmediately && createdOrder.uang_muka_dp > 0) {
+        nextCash.unshift({
+          id: `CSH-${Date.now()}`,
+          no_kas: generateSequenceCode('KAS-2026-', prev.cashEntries.length, 4),
+          tanggal: today,
+          arah: 'masuk',
+          kategori: 'penjualan_toko',
+          jumlah: createdOrder.uang_muka_dp,
+          keterangan: `Penerimaan DP Katering ${no_pesanan} (${createdOrder.nama_paket} - ${createdOrder.nama_pemesan})`,
+          ref_tipe: 'invoice',
+          ref_id: createdOrder.id,
+        });
+      }
+
+      return {
+        ...prev,
+        cateringOrders: [createdOrder, ...prev.cateringOrders],
+        cashEntries: nextCash,
+      };
+    });
+
+    logAudit('CREATE', 'catering_orders', (createdOrder as any)?.id || '', `Pemesanan katering baru ${(createdOrder as any)?.no_pesanan} a.n ${(createdOrder as any)?.nama_pemesan}`);
+    return createdOrder;
+  }, [mutate, logAudit]);
+
+  const updateCateringOrderStatus = useCallback((orderId: string, status: CateringOrder['status_pesanan']) => {
+    let orderNo = '';
+    mutate((prev) => {
+      const ord = prev.cateringOrders.find((o) => o.id === orderId);
+      if (ord) orderNo = ord.no_pesanan;
+      return {
+        ...prev,
+        cateringOrders: prev.cateringOrders.map((o) =>
+          o.id === orderId ? { ...o, status_pesanan: status } : o
+        ),
+      };
+    });
+    logAudit('UPDATE', 'catering_orders', orderId, `Memperbarui status pesanan katering ${orderNo} menjadi: ${status.toUpperCase()}`);
+  }, [mutate, logAudit]);
+
+  const payCateringOrder = useCallback((orderId: string, amount: number, tipe: 'dp' | 'pelunasan') => {
+    if (amount <= 0) throw new Error('Nominal pembayaran harus lebih dari 0');
+
+    let ordRecord: CateringOrder | undefined;
+    const today = formatISODate(new Date());
+
+    mutate((prev) => {
+      ordRecord = prev.cateringOrders.find((o) => o.id === orderId);
+      if (!ordRecord) throw new Error('Pesanan katering tidak ditemukan');
+
+      const newDp = ordRecord.uang_muka_dp + amount;
+      const newSisa = Math.max(0, ordRecord.total_harga - newDp);
+      const newStatusBayar: CateringPaymentStatus = newSisa === 0 ? 'lunas' : newDp > 0 ? 'dp_lunas' : 'belum_dp';
+
+      const updatedOrders = prev.cateringOrders.map((o) =>
+
+        o.id === orderId
+          ? {
+              ...o,
+              uang_muka_dp: newDp,
+              sisa_tagihan: newSisa,
+              status_pembayaran: newStatusBayar,
+            }
+          : o
+      );
+
+      const cashEntry: CashEntry = {
+        id: `CSH-${Date.now()}`,
+        no_kas: generateSequenceCode('KAS-2026-', prev.cashEntries.length, 4),
+        tanggal: today,
+        arah: 'masuk',
+        kategori: 'penjualan_toko',
+        jumlah: amount,
+        keterangan: `Pembayaran ${tipe === 'dp' ? 'DP' : 'Pelunasan'} Katering ${ordRecord.no_pesanan} a.n ${ordRecord.nama_pemesan}`,
+        ref_tipe: 'invoice',
+        ref_id: orderId,
+      };
+
+      return {
+        ...prev,
+        cateringOrders: updatedOrders,
+        cashEntries: [cashEntry, ...prev.cashEntries],
+      };
+    });
+
+    logAudit('CREATE', 'catering_orders', orderId, `Menerima pembayaran ${tipe} Rp ${amount.toLocaleString('id-ID')} untuk ${ordRecord?.no_pesanan}`);
+  }, [mutate, logAudit]);
+
   const resetToDefault = useCallback(() => {
     const fresh = resetDatabase();
     setDb(fresh);
@@ -725,10 +878,17 @@ function useDatabaseInternal() {
     payInvoice,
     addCashEntry,
     calculateAndSetShu,
+    addCateringPackage,
+    updateCateringPackage,
+    deleteCateringPackage,
+    createCateringOrder,
+    updateCateringOrderStatus,
+    payCateringOrder,
     resetToDefault,
     logAudit,
   };
 }
+
 
 export type DatabaseContextType = ReturnType<typeof useDatabaseInternal>;
 

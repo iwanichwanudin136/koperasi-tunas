@@ -18,7 +18,9 @@ import {
   CreditCard,
   PlusCircle,
   FileSpreadsheet,
+  UtensilsCrossed,
 } from 'lucide-react';
+
 import Link from 'next/link';
 
 export default function DashboardPage() {
@@ -55,8 +57,10 @@ export default function DashboardPage() {
   // Pending Actions
   const pendingFinancings = (db?.financings || []).filter((f) => f.status === 'diajukan');
   const lowStockProducts = (db?.products || []).filter((p) => p.stok <= p.stok_min);
+  const pendingCatering = (db?.cateringOrders || []).filter((o) => o.status_pesanan === 'masuk');
 
   // Recent Transactions (simpanan + cash)
+
   const recentSavings = (db?.savingsTransactions || []).slice(0, 5);
 
   return (
@@ -253,13 +257,38 @@ export default function DashboardPage() {
                 </div>
               ))}
 
+              {/* Item 4: Pesanan Katering Masuk */}
+              {pendingCatering.map((ord) => (
+                <div
+                  key={ord.id}
+                  className="p-3 rounded-xl bg-purple-50/50 border border-purple-100 flex items-center justify-between gap-3"
+                >
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-slate-800 truncate">
+                      Katering: {ord.nama_pemesan}
+                    </p>
+                    <p className="text-[11px] text-purple-700 font-semibold">
+                      {ord.nama_paket} ({ord.porsi} porsi)
+                    </p>
+                  </div>
+                  <Link
+                    href="/katering"
+                    className="px-2.5 py-1 bg-purple-600 hover:bg-purple-700 text-white text-[11px] font-bold rounded-lg transition-colors shrink-0"
+                  >
+                    Tinjau
+                  </Link>
+                </div>
+              ))}
+
               {candidateMembers.length === 0 &&
                 pendingFinancings.length === 0 &&
-                lowStockProducts.length === 0 && (
+                lowStockProducts.length === 0 &&
+                pendingCatering.length === 0 && (
                   <div className="p-6 text-center text-xs text-slate-400">
                     Tidak ada tindakan tertunda. Semua operasional koperasi up-to-date!
                   </div>
                 )}
+
             </div>
           </div>
 

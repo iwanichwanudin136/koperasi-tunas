@@ -15,7 +15,9 @@ import {
   Layers,
   FileSpreadsheet,
   Share2,
+  UtensilsCrossed,
 } from 'lucide-react';
+
 import { useDatabase } from '@/lib/useDatabase';
 import { calculateMurabahah, formatRupiah } from '@/lib/utils';
 
@@ -115,6 +117,12 @@ export default function PublicLandingPage() {
               Katalog Produk
             </a>
             <a
+              href="#katering"
+              className="hidden md:inline-flex text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-lg px-3 py-1.5 transition-colors"
+            >
+              Katering &amp; Aqiqah
+            </a>
+            <a
               href="#daftar"
               className="hidden md:inline-flex text-xs font-semibold text-slate-600 hover:text-[#1d5fc1] px-3 py-2"
             >
@@ -128,6 +136,7 @@ export default function PublicLandingPage() {
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
+
         </div>
       </header>
 
@@ -434,8 +443,115 @@ export default function PublicLandingPage() {
         </div>
       </section>
 
+      {/* Katering & Aqiqah Syariah Section */}
+      <section id="katering" className="py-16 bg-gradient-to-b from-amber-50/40 via-white to-slate-50 border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-bold mb-2">
+                <UtensilsCrossed className="w-3.5 h-3.5 text-amber-700" />
+                <span>Unit Katering &amp; Aqiqah Berkah Halal</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-[#153f8a]">
+                Katering Acara, Walimah &amp; Aqiqah Syar&apos;i
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl">
+                Solusi hidangan lezat higienis untuk kajian majelis taklim, walimatul &apos;ursy, syukuran aqiqah, serta rapat instansi yang diproduksi oleh UMKM kuliner anggota koperasi.
+              </p>
+            </div>
+            <a
+              href="https://wa.me/6281288997722?text=Assalamu'alaikum%20Admin%20Katering%20Koperasi%20Taawun,%20saya%20ingin%20konsultasi%20pesanan%20katering/aqiqah"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition-colors shrink-0"
+            >
+              <Phone className="w-3.5 h-3.5" />
+              <span>Konsultasi Menu WhatsApp</span>
+            </a>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {(db?.cateringPackages || []).map((pkg) => (
+              <div
+                key={pkg.id}
+                className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between"
+              >
+                <div className="p-5">
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 uppercase tracking-wider">
+                      {pkg.kategori.replace('_', ' ')}
+                    </span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-[#1d5fc1]">
+                      Akad Istishna / Salam
+                    </span>
+                  </div>
+
+                  <h3 className="text-sm font-bold text-slate-800 leading-snug mb-1">
+                    {pkg.nama}
+                  </h3>
+                  <p className="text-xs text-slate-500 line-clamp-2 mb-3">
+                    {pkg.deskripsi}
+                  </p>
+
+                  <div className="space-y-1 pt-2 border-t border-slate-100">
+                    <p className="text-[11px] font-bold text-slate-700">Pilihan Menu:</p>
+                    <ul className="text-[11px] text-slate-600 space-y-0.5">
+                      {pkg.menu_items.slice(0, 4).map((item, i) => (
+                        <li key={i} className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                          <span className="truncate">{item}</span>
+                        </li>
+                      ))}
+                      {pkg.menu_items.length > 4 && (
+                        <li className="text-[10px] text-slate-400 italic">
+                          +{pkg.menu_items.length - 4} menu pelengkap lainnya
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">Mulai dari / porsi</span>
+                    <span className="text-sm font-extrabold text-[#153f8a]">
+                      {formatRupiah(pkg.harga_per_porsi)}
+                    </span>
+                  </div>
+                  <a
+                    href={`https://wa.me/6281288997722?text=Halo%20Admin,%20saya%20tertarik%20dengan%20${encodeURIComponent(pkg.nama)}%20(Min%20${pkg.min_order}%20porsi).`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-3.5 py-1.5 bg-[#1d5fc1] hover:bg-[#153f8a] text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5"
+                  >
+                    <ShoppingBag className="w-3.5 h-3.5" />
+                    <span>Pesan Paket</span>
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-8 p-4 rounded-2xl bg-blue-50/70 border border-blue-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2.5">
+              <Sparkles className="w-5 h-5 text-[#1d5fc1] shrink-0" />
+              <span className="text-slate-700">
+                Punya usaha kuliner? Bergabunglah sebagai <strong>Mitra Dapur Katering Koperasi</strong> untuk memperluas pasar catering acara syariah.
+              </span>
+            </div>
+            <Link
+              href="/dashboard"
+              className="font-bold text-[#1d5fc1] hover:underline whitespace-nowrap"
+            >
+              Kelola di Portal Pengurus →
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* Form Pendaftaran Calon Anggota (M2, M8) */}
       <section id="daftar" className="py-16 bg-white border-b border-slate-200">
+
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-gradient-to-br from-[#1d5fc1]/5 via-white to-slate-50 border border-blue-200 rounded-3xl p-6 sm:p-10 shadow-lg">
             <div className="text-center max-w-xl mx-auto mb-8">

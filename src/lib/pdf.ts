@@ -2,7 +2,8 @@
 
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { CooperativeConfig, Financing, Installment, Invoice, Member, ShuPeriod, ShuResult } from '@/types';
+import { CateringOrder, CooperativeConfig, Financing, Installment, Invoice, Member, ShuPeriod, ShuResult } from '@/types';
+
 import { formatDate, formatRupiah } from './utils';
 
 // Helper: Header Dokumen Koperasi
@@ -337,3 +338,107 @@ export function generateShuCertificatePDF(
 
   doc.save(`SHU-${period.tahun}-${member.no_anggota}-${member.nama.replace(/\s+/g, '_')}.pdf`);
 }
+
+/**
+ * Cetak Surat Pesanan & Faktur Katering Syariah (Akad Istishna / Salam)
+ */
+export function generateCateringOrderPDF(order: CateringOrder, config: CooperativeConfig) {
+  const doc = new jsPDF();
+  const akadTitle = order.akad === 'istishna' ? 'AKAD ISTISHNA (PESANAN PEMBUATAN)' : 'AKAD SALAM (PESANAN DIMUKA)';
+  drawCooperativeHeader(doc, config, `SURAT PESANAN & FAKTUR KATERING SYARIAH\n${akadTitle}`);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(40, 40, 40);
+
+  doc.text(`Nomor Pesanan  : ${order.no_pesanan}`, 14, 50);
+  doc.text(`Tanggal Pesan  : ${formatDate(order.tgl_pesan)}`, 14, 55);
+  doc.text(`Akad Syariah   : ${order.akad.toUpperCase()} (Jual Beli Pesanan Halal)`, 14, 60);
+
+  doc.text(`Pemesan / Klien : ${order.nama_pemesan}`, 115, 50);
+  doc.text(`No. Kontak      : ${order.telepon}`, 115, 55);
+  doc.text(`Status Bayar    : ${order.status_pembayaran.toUpperCase().replace('_', ' ')}`, 115, 60);
+
+  // Tabel Detail Acara & Pengiriman
+  autoTable(doc, {
+    startY: 66,
+    head: [['Detail Pelaksanaan Acara', 'Keterangan']],
+    body: [
+      ['Jenis Acara', order.jenis_acara],
+      ['Tanggal & Waktu Acara', `${formatDate(order.tgl_acara)} pukul ${order.waktu_acara}`],
+      ['Alamat Lengkap Pengiriman', order.alamat_pengiriman],
+      ['Catatan / Permintaan Khusus', order.menu_custom || order.catatan || '-'],
+    ],
+    theme: 'grid',
+    headStyles: { fillColor: [29, 95, 193], textColor: 255 },
+    styles: { fontSize: 8.5, cellPadding: 2 },
+    columnStyles: { 0: { cellWidth: 60, fontStyle: 'bold' } },
+  });
+
+  const lastY1 = (doc as any).lastAutoTable.finalY || 105;
+
+  // Tabel Rincian Menu & Harga
+  autoTable(doc, {
+    startY: lastY1 + 5,
+    head: [['No', 'Paket Katering Syariah', 'Jumlah Porsi', 'Harga / Porsi', 'Total Biaya']],
+    body: [
+      [
+        '1',
+        `${order.nama_paket}\n${order.menu_custom ? `Catatan: ${order.menu_custom}` : ''}`,
+        `${order.porsi} Porsi`,
+        formatRupiah(order.harga_satuan),
+        formatRupiah(order.total_harga),
+      ],
+    ],
+    theme: 'striped',
+    headStyles: { fillColor: [21, 63, 138], textColor: 255 },
+    styles: { fontSize: 8.5, cellPadding: 2.5 },
+    columnStyles: {
+      0: { cellWidth: 10, halign: 'center' },
+      2: { cellWidth: 30, halign: 'center' },
+      3: { cellWidth: 35, halign: 'right' },
+      4: { cellWidth: 40, halign: 'right', fontStyle: 'bold' },
+    },
+  });
+
+  const lastY2 = (doc as any).lastAutoTable.finalY || 140;
+
+  // Rincian Pembayaran (DP & Sisa)
+  autoTable(doc, {
+    startY: lastY2 + 5,
+    head: [['Rincian Pembayaran', 'Nominal']],
+    body: [
+      ['Total Nilai Pesanan', formatRupiah(order.total_harga)],
+      ['Uang Muka (DP) yang Telah Dibayar', formatRupiah(order.uang_muka_dp)],
+      ['Sisa Pelunasan', formatRupiah(order.sisa_tagihan)],
+    ],
+    theme: 'grid',
+    headStyles: { fillColor: [100, 116, 139], textColor: 255 },
+    styles: { fontSize: 8.5, cellPadding: 2 },
+    columnStyles: {
+      0: { fontStyle: 'bold' },
+      1: { halign: 'right', fontStyle: 'bold', textColor: [21, 63, 138] },
+    },
+  });
+
+  const lastY3 = (doc as any).lastAutoTable.finalY || 180;
+
+  // Rekening Pembayaran Koperasi
+  doc.setFontSize(8);
+  doc.setTextColor(60, 60, 60);
+  doc.text('Pembayaran dapat ditransfer melalui Rekening Resmi Koperasi:', 14, lastY3 + 8);
+  config.rekening_bank.forEach((rek, idx) => {
+    doc.text(`• ${rek.bank} No. ${rek.no_rekening} a.n ${rek.atas_nama}`, 18, lastY3 + 13 + idx * 4.5);
+  });
+
+  const sigY = lastY3 + 28;
+  doc.setFontSize(8.5);
+  doc.text('Pemesan / Klien,', 35, sigY);
+  doc.text(order.nama_pemesan, 35, sigY + 20);
+
+  doc.text('Penanggung Jawab Katering,', 135, sigY);
+  doc.text(config.bendahara, 135, sigY + 20);
+
+  doc.save(`Surat-Pesanan-Katering-${order.no_pesanan}-${order.nama_pemesan.replace(/\s+/g, '_')}.pdf`);
+}
+

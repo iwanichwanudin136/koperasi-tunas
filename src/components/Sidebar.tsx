@@ -9,6 +9,7 @@ import {
   Wallet,
   Handshake,
   Store,
+  UtensilsCrossed,
   BookOpen,
   PieChart,
   Megaphone,
@@ -26,7 +27,7 @@ interface NavItem {
   href: string;
   icon: React.ElementType;
   roles?: UserRole[];
-  badgeKey?: 'calon' | 'finPending' | 'lowStock' | 'invPending';
+  badgeKey?: 'calon' | 'finPending' | 'lowStock' | 'invPending' | 'catPending';
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -35,6 +36,7 @@ const NAV_ITEMS: NavItem[] = [
   { name: 'Simpanan', href: '/simpanan', icon: Wallet, roles: ['admin', 'bendahara', 'pengawas'] },
   { name: 'Pembiayaan Syariah', href: '/pembiayaan', icon: Handshake, badgeKey: 'finPending', roles: ['admin', 'bendahara', 'pengawas'] },
   { name: 'Toko & Invoice', href: '/toko', icon: Store, badgeKey: 'lowStock', roles: ['admin', 'marketing', 'bendahara', 'pengawas'] },
+  { name: 'Katering Syariah', href: '/katering', icon: UtensilsCrossed, badgeKey: 'catPending', roles: ['admin', 'marketing', 'bendahara', 'pengawas'] },
   { name: 'Buku Kas', href: '/kas', icon: BookOpen, roles: ['admin', 'bendahara', 'pengawas'] },
   { name: 'Saham & SHU', href: '/shu', icon: PieChart, roles: ['admin', 'sekretaris', 'pengawas'] },
   { name: 'Marketing & UTM', href: '/marketing', icon: Megaphone, roles: ['admin', 'marketing', 'pengawas'] },
@@ -51,13 +53,16 @@ export function Sidebar() {
   const pendingCandidates = db?.members?.filter((m) => m.status === 'calon').length || 0;
   const pendingFinancings = db?.financings?.filter((f) => f.status === 'diajukan').length || 0;
   const lowStockProducts = db?.products?.filter((p) => p.stok <= p.stok_min).length || 0;
+  const pendingCatering = db?.cateringOrders?.filter((o) => o.status_pesanan === 'masuk' || o.status_pesanan === 'dikonfirmasi').length || 0;
 
   const getBadgeCount = (badgeKey?: string) => {
     if (badgeKey === 'calon') return pendingCandidates;
     if (badgeKey === 'finPending') return pendingFinancings;
     if (badgeKey === 'lowStock') return lowStockProducts;
+    if (badgeKey === 'catPending') return pendingCatering;
     return 0;
   };
+
 
   const getRoleLabel = (role: UserRole) => {
     switch (role) {

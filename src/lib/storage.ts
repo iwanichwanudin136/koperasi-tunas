@@ -4,6 +4,8 @@ import {
   AuditLog,
   Campaign,
   CashEntry,
+  CateringOrder,
+  CateringPackage,
   CooperativeConfig,
   Financing,
   Installment,
@@ -36,7 +38,10 @@ export interface AppDatabase {
   shuResults: ShuResult[];
   campaigns: Campaign[];
   auditLogs: AuditLog[];
+  cateringPackages: CateringPackage[];
+  cateringOrders: CateringOrder[];
 }
+
 
 const DEFAULT_CONFIG: CooperativeConfig = {
   nama: 'Koperasi Taawun Amal Sejahtera',
@@ -817,6 +822,149 @@ const SEED_AUDIT_LOGS: AuditLog[] = [
   },
 ];
 
+export const SEED_CATERING_PACKAGES: CateringPackage[] = [
+  {
+    id: 'CAT-01',
+    nama: 'Paket Nasi Box Berkah Syariah',
+    kategori: 'nasi_box',
+    deskripsi: 'Nasi box higienis & lezat untuk acara pengajian, rapat kantor, dan syukuran keluarga.',
+    harga_per_porsi: 28000,
+    min_order: 20,
+    menu_items: ['Nasi Liwet Gurih / Nasi Putih', 'Ayam Bakar Madu / Rendang Daging', 'Sambal Goreng Kentang Ati', 'Tumis Buncis Jagung Manis', 'Kerupuk Udang', 'Sambal Bajak & Lalapan', 'Air Mineral Cup'],
+    nama_umkm: 'Dapur Berkah Bu Dewi (UMKM Anggota A-0001)',
+    sertifikasi_halal: 'ID3111000189201024',
+  },
+  {
+    id: 'CAT-02',
+    nama: 'Paket Aqiqah Sunnah Berkah (1 Ekor Kambing)',
+    kategori: 'aqiqah',
+    deskripsi: 'Penyembelihan kambing sesuai syariat, diolah menjadi gulai gurih & sate empuk siap santap.',
+    harga_per_porsi: 35000,
+    min_order: 50,
+    menu_items: ['Nasi Kebuli / Nasi Putih Wangi', 'Gulai Kambing Tanpa Prengus', 'Sate Kambing Empuk Bumbu Kecap (3 Tusuk)', 'Acar Nanas Segar', 'Kerupuk Emping Melinjo', 'Buah Pisang Sunpride', 'Sertifikat & Dokumentasi Syar\'i'],
+    nama_umkm: 'Aqiqah Taawun Mandiri (Mitra Koperasi)',
+    sertifikasi_halal: 'ID3111000293810324',
+  },
+  {
+    id: 'CAT-03',
+    nama: 'Paket Prasmanan Walimah Sunnah',
+    kategori: 'prasmanan',
+    deskripsi: 'Layanan prasmanan lengkap dengan alat pemanas & meja hidangan untuk pesta walimah nikah & reuni.',
+    harga_per_porsi: 55000,
+    min_order: 100,
+    menu_items: ['Nasi Putih Pandan Wangi + Nasi Goreng Spesial', 'Daging Sapi Lada Hitam / Rendang Padang', 'Ayam Suwir Bumbu Rujak', 'Sup Kimlo Bakso Ikan', 'Capcay Seafood', 'Asinan Sayur Betawi', 'Puding Buah Segar + Aneka Es Buah', 'Peralatan Prasmanan & Waiter Halal'],
+    nama_umkm: 'Katering Hj. Nurul Barokah (UMKM Anggota A-0004)',
+    sertifikasi_halal: 'ID3111000301920424',
+  },
+  {
+    id: 'CAT-04',
+    nama: 'Snack Box Tradisional & Bakery Halal',
+    kategori: 'snack_box',
+    deskripsi: 'Kombinasi kue basah tradisional dan roti manis berkualitas untuk coffee break seminar & kajian.',
+    harga_per_porsi: 15000,
+    min_order: 25,
+    menu_items: ['Lemper Ayam Bakar Gurih', 'Pastel Sayur Telur Spesial', 'Kue Lumpur Surga Pandan', 'Air Mineral Botol 330ml'],
+    nama_umkm: 'Kue Berkah Fatimah (UMKM Anggota A-0002)',
+    sertifikasi_halal: 'ID3111000412890524',
+  },
+  {
+    id: 'CAT-05',
+    nama: 'Tumpeng Syukuran Kuning Berkah (15-20 Porsi)',
+    kategori: 'tumpeng',
+    deskripsi: 'Nasi tumpeng hias cantik bertingkat dengan aneka lauk komplit untuk peresmian & milad.',
+    harga_per_porsi: 45000,
+    min_order: 15,
+    menu_items: ['Nasi Kuning Harum Pulen', 'Ayam Goreng Lengkuas', 'Urap Sayuran Bumbu Kelapa', 'Telur Balado & Dadar Rawis', 'Perkedel Kentang Daging', 'Orek Tempe Kering Manis', 'Sambal Terasi Matang', 'Garnish Sayuran Ukir Cantik'],
+    nama_umkm: 'Dapur Berkah Bu Dewi (UMKM Anggota A-0001)',
+    sertifikasi_halal: 'ID3111000189201024',
+  },
+  {
+    id: 'CAT-06',
+    nama: 'Katering Harian Rantang / Kantor Halal',
+    kategori: 'harian',
+    deskripsi: 'Langganan menu makan siang sehat halal untuk instansi perkantoran & yayasan sekolah.',
+    harga_per_porsi: 25000,
+    min_order: 10,
+    menu_items: ['Menu Berganti Setiap Hari (35 Pilihan)', '1 Menu Utama Daging / Ayam / Ikan', '1 Menu Sayuran Segar', '1 Menu Pendamping (Tahu/Tempe/Bakwan)', 'Nasi Putih & Sambal'],
+    nama_umkm: 'Katering Hj. Nurul Barokah (UMKM Anggota A-0004)',
+    sertifikasi_halal: 'ID3111000301920424',
+  },
+];
+
+export const SEED_CATERING_ORDERS: CateringOrder[] = [
+  {
+    id: 'CORD-001',
+    no_pesanan: 'KAT-2026-0001',
+    member_id: 'MB-003',
+    nama_pemesan: 'Umar Abdullah, S.T.',
+    telepon: '081198765433',
+    alamat_pengiriman: 'Gedung Dakwah Al-Azhar Lt. 2, Kebayoran Baru, Jakarta Selatan',
+    tgl_acara: '2026-10-15',
+    waktu_acara: '11:30 WIB',
+    jenis_acara: 'Kajian & Rapat Kerja Yayasan',
+    package_id: 'CAT-01',
+    nama_paket: 'Paket Nasi Box Berkah Syariah',
+    porsi: 75,
+    harga_satuan: 28000,
+    menu_custom: 'Pilihan lauk: Ayam Bakar Madu + Ekstra Sambal Bajak dipisah',
+    total_harga: 2100000,
+    uang_muka_dp: 1050000,
+    sisa_tagihan: 1050000,
+    status_pembayaran: 'dp_lunas',
+    status_pesanan: 'dikonfirmasi',
+    akad: 'istishna',
+    tgl_pesan: '2026-10-02',
+    catatan: 'Pengiriman maksimal pukul 11:00 WIB sebelum kajian selesai.',
+  },
+  {
+    id: 'CORD-002',
+    no_pesanan: 'KAT-2026-0002',
+    member_id: 'MB-005',
+    nama_pemesan: 'Hendra Gunawan',
+    telepon: '081787654355',
+    alamat_pengiriman: 'Jl. Otista III No. 5B, Jakarta Timur',
+    tgl_acara: '2026-10-20',
+    waktu_acara: '09:00 WIB',
+    jenis_acara: 'Tasyakuran Aqiqah Anak Kedua',
+    package_id: 'CAT-02',
+    nama_paket: 'Paket Aqiqah Sunnah Berkah (1 Ekor Kambing)',
+    porsi: 60,
+    harga_satuan: 35000,
+    menu_custom: 'Gulai kambing + Sate bumbu kacang & kecap terpisah',
+    total_harga: 2100000,
+    uang_muka_dp: 2100000,
+    sisa_tagihan: 0,
+    status_pembayaran: 'lunas',
+    status_pesanan: 'dimasak',
+    akad: 'salam',
+    tgl_pesan: '2026-10-04',
+    catatan: 'Disertai sertifikat aqiqah dan foto proses penyembelihan syar\'i.',
+  },
+  {
+    id: 'CORD-003',
+    no_pesanan: 'KAT-2026-0003',
+    nama_pemesan: 'Ustadz Haris Munandar (DKM Masjid Raya)',
+    telepon: '081377889900',
+    alamat_pengiriman: 'Masjid Raya Al-Muhajirin, Rawamangun, Jakarta Timur',
+    tgl_acara: '2026-10-25',
+    waktu_acara: '18:30 WIB',
+    jenis_acara: 'Tabligh Akbar & Santunan Yatim',
+    package_id: 'CAT-04',
+    nama_paket: 'Snack Box Tradisional & Bakery Halal',
+    porsi: 150,
+    harga_satuan: 15000,
+    menu_custom: 'Snack box isi 3 kue basah + air mineral',
+    total_harga: 2250000,
+    uang_muka_dp: 0,
+    sisa_tagihan: 2250000,
+    status_pembayaran: 'belum_dp',
+    status_pesanan: 'masuk',
+    akad: 'istishna',
+    tgl_pesan: '2026-10-07',
+    catatan: 'Pemesanan online via website koperasi, menunggu konfirmasi admin.',
+  },
+];
+
 const STORAGE_KEY = 'koperasi_syariah_db_v1';
 
 export function getInitialDatabase(): AppDatabase {
@@ -836,6 +984,8 @@ export function getInitialDatabase(): AppDatabase {
     shuResults: [],
     campaigns: SEED_CAMPAIGNS,
     auditLogs: SEED_AUDIT_LOGS,
+    cateringPackages: SEED_CATERING_PACKAGES,
+    cateringOrders: SEED_CATERING_ORDERS,
   };
 }
 
@@ -848,7 +998,15 @@ export function loadDatabase(): AppDatabase {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(initial));
       return initial;
     }
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    // Backfill jika key katering belum ada di storage lama
+    if (!parsed.cateringPackages || parsed.cateringPackages.length === 0) {
+      parsed.cateringPackages = SEED_CATERING_PACKAGES;
+    }
+    if (!parsed.cateringOrders) {
+      parsed.cateringOrders = SEED_CATERING_ORDERS;
+    }
+    return parsed;
   } catch (e) {
     console.error('Failed to load database from localStorage', e);
     return getInitialDatabase();
@@ -869,5 +1027,6 @@ export function resetDatabase(): AppDatabase {
   saveDatabase(initial);
   return initial;
 }
+
 
 export { DEFAULT_USERS };
